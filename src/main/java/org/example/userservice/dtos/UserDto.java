@@ -1,5 +1,6 @@
 package org.example.userservice.dtos;
 
+import java.util.ArrayList;
 import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
@@ -12,7 +13,7 @@ public class UserDto {
 
   private String username;
   private String email;
-  private List<Roles> roles;
+  private List<String> roles;
 
   public static UserDto from(User user) {
     if (user == null) {
@@ -21,7 +22,9 @@ public class UserDto {
     UserDto userDto = new UserDto();
     userDto.setUsername(user.getName());
     userDto.setEmail(user.getEmail());
-    userDto.setRoles(user.getRoles());
+    userDto.setRoles(new ArrayList<>());
+    for(Roles roles: user.getRoles())
+      userDto.getRoles().add(roles.getValue());
     return userDto;
 
   }

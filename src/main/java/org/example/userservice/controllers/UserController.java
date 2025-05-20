@@ -35,7 +35,7 @@ public class UserController {
 
   }
 
-  @PostMapping("/singup")
+  @PostMapping("/signup")
   public UserDto signUp(@RequestBody SignUpRequestDto signUpRequestDto) {
     User user = userService.singUp(signUpRequestDto.getUsername(), signUpRequestDto.getPassword(),
         signUpRequestDto.getEmail());
@@ -51,7 +51,7 @@ public class UserController {
 
   }
 
-  @GetMapping("/validate")
+  @GetMapping("/validate/{token_value}")
   public UserDto validateToken(@PathVariable String token_value) {
     User user= userService.validateToken(token_value);
     return UserDto.from(user);

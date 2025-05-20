@@ -1,15 +1,20 @@
 package org.example.userservice.services;
 
+import ch.qos.logback.core.testUtil.RandomUtil;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Optional;
 import java.util.UUID;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.example.userservice.exceptions.UnauthorizedException;
 import org.example.userservice.exceptions.UserNotFoundException;
 import org.example.userservice.models.Token;
 import org.example.userservice.models.User;
 import org.example.userservice.repositories.TokenRepository;
 import org.example.userservice.repositories.UserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -17,10 +22,12 @@ public class UserServiceImpl implements UserService {
 
   private final UserRepository userRepository;
   private final TokenRepository tokenRepository;
+  private BCryptPasswordEncoder bCryptPasswordEncoder;
 
-  public UserServiceImpl(UserRepository userRepository, TokenRepository tokenRepository) {
+  public UserServiceImpl(UserRepository userRepository, TokenRepository tokenRepository,BCryptPasswordEncoder passwordEncoder) {
     this.userRepository = userRepository;
     this.tokenRepository = tokenRepository;
+    this.bCryptPasswordEncoder=passwordEncoder;
   }
 
   @Override
@@ -33,8 +40,10 @@ public class UserServiceImpl implements UserService {
     User user = new User();
     user.setEmail(email);
     user.setName(username);
+    user.setRoles(new ArrayList<>());
     //toDo:we should save password using Bcrypt generator
-    user.setPassword(password);
+
+    user.setPassword(bCryptPasswordEncoder.encode(password));
     return userRepository.save(user);
 
   }
@@ -48,10 +57,10 @@ public class UserServiceImpl implements UserService {
     }
     User user = optionalUser.get();
     //check for password
-    if (user.getPassword().equals(password)) {
+    if (bCryptPasswordEncoder.matches(password, user.getPassword())) {
       Token token = new Token();
       token.setUser(user);
-      token.setValue(String.valueOf(UUID.randomUUID()));
+      token.setValue(RandomStringUtils.randomAlphanumeric(128));
       Date currentDate = new Date();
       Calendar calendar = Calendar.getInstance();
       calendar.setTime(currentDate);
