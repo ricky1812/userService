@@ -20,17 +20,17 @@ public class UserServiceImpl implements UserService {
 
   public UserServiceImpl(UserRepository userRepository, TokenRepository tokenRepository) {
     this.userRepository = userRepository;
-    this.tokenRepository=tokenRepository;
+    this.tokenRepository = tokenRepository;
   }
 
   @Override
   public User singUp(String username, String password, String email) {
     Optional<User> optionalUser = userRepository.findByEmail(email);
-    if(optionalUser.isPresent()){
+    if (optionalUser.isPresent()) {
       //redirect to login;
       return optionalUser.get();
     }
-    User user=new User();
+    User user = new User();
     user.setEmail(email);
     user.setName(username);
     //toDo:we should save password using Bcrypt generator
@@ -42,21 +42,21 @@ public class UserServiceImpl implements UserService {
   @Override
   public Token login(String email, String password)
       throws UserNotFoundException, UnauthorizedException {
-    Optional<User> optionalUser=userRepository.findByEmail(email);
-    if(optionalUser.isEmpty()){
-      throw new UserNotFoundException("user with email "+email+" doesnt exists");
+    Optional<User> optionalUser = userRepository.findByEmail(email);
+    if (optionalUser.isEmpty()) {
+      throw new UserNotFoundException("user with email " + email + " doesnt exists");
     }
-    User user= optionalUser.get();
+    User user = optionalUser.get();
     //check for password
-    if(user.getPassword().equals(password)){
-      Token token=new Token();
+    if (user.getPassword().equals(password)) {
+      Token token = new Token();
       token.setUser(user);
       token.setValue(String.valueOf(UUID.randomUUID()));
-      Date currentDate=new Date();
-      Calendar calendar=Calendar.getInstance();
+      Date currentDate = new Date();
+      Calendar calendar = Calendar.getInstance();
       calendar.setTime(currentDate);
-      calendar.add(Calendar.DAY_OF_MONTH,30);
-      Date dateAfter30days=calendar.getTime();
+      calendar.add(Calendar.DAY_OF_MONTH, 30);
+      Date dateAfter30days = calendar.getTime();
       token.setExpiryDt(dateAfter30days);
       return tokenRepository.save(token);
     }
@@ -66,15 +66,21 @@ public class UserServiceImpl implements UserService {
 
   @Override
   public User validateToken(String tokenValue) {
-    return null;
+    //check if the token is present in db or not
+    //check if the expirary time is correct or not
+    Optional<Token> optionalToken = tokenRepository.findByValueAndDeletedAndExpiryDtGreaterThan(
+        tokenValue, false, new Date());
+    return optionalToken.map(Token::getUser).orElse(null);
+
   }
 
   @Override
   public void logout(String tokenValue) {
-    Optional<Token> optionalToken=tokenRepository.findByValue(tokenValue);
-    if(optionalToken.isEmpty())
+    Optional<Token> optionalToken = tokenRepository.findByValue(tokenValue);
+    if (optionalToken.isEmpty()) {
       throw new RuntimeException("Token is invalid");
-    Token token= optionalToken.get();
+    }
+    Token token = optionalToken.get();
     token.setDeleted(true);
     tokenRepository.save(token);
 
